@@ -52,6 +52,7 @@ import { PostJob } from "./pages/PostJob";
 import { ChatPage } from "./pages/ChatPage";
 import { TermsPage } from "./pages/TermsPage";
 import { SupportPage } from "./pages/SupportPage";
+import { AdminProtectedRoute } from "./components/AdminProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -131,11 +132,11 @@ export const router = createBrowserRouter([
   {
     path: "/admin",
     children: [
-      { index: true, element: <AdminDashboard /> },
-      { path: "users", element: <AdminUsers /> },
-      { path: "jobs", element: <AdminJobs /> },
-      { path: "transactions", element: <AdminTransactions /> },
-      { path: "disputes", element: <AdminDisputes /> },
+      { index: true, element: <AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute> },
+      { path: "users", element: <AdminProtectedRoute><AdminUsers /></AdminProtectedRoute> },
+      { path: "jobs", element: <AdminProtectedRoute><AdminJobs /></AdminProtectedRoute> },
+      { path: "transactions", element: <AdminProtectedRoute><AdminTransactions /></AdminProtectedRoute> },
+      { path: "disputes", element: <AdminProtectedRoute><AdminDisputes /></AdminProtectedRoute> },
     ],
   },
   // Shared Routes
