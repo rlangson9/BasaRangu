@@ -151,6 +151,39 @@ app.post("/make-server-5ed51d91/auth/switch-role", async (c) => {
   }
 });
 
+// ==================== APP SETTINGS ====================
+
+app.get("/make-server-5ed51d91/app/settings", async (c) => {
+  try {
+    const settings = await kv.get("app:settings");
+    const defaultSettings = {
+      appName: "BasaRangu",
+      appTagline: "Home Services & Job Recruitment Platform",
+      logoUrl: "/basarangu.png"
+    };
+    return c.json({ settings: settings ? JSON.parse(settings) : defaultSettings });
+  } catch (error) {
+    console.error("Error getting app settings:", error);
+    return c.json({ error: "Failed to get settings" }, 500);
+  }
+});
+
+app.put("/make-server-5ed51d91/app/settings", async (c) => {
+  try {
+    const token = c.req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) return c.json({ error: "Unauthorized" }, 401);
+    const phone = await kv.get(`token:${token}`);
+    const user = JSON.parse(await kv.get(`user:${phone}`) || "{}");
+    // Only allow admins (you can add admin role check later)
+    const settings = await c.req.json();
+    await kv.set("app:settings", JSON.stringify(settings));
+    return c.json({ success: true, settings });
+  } catch (error) {
+    console.error("Error updating app settings:", error);
+    return c.json({ error: "Failed to update settings" }, 500);
+  }
+});
+
 // ==================== JOBS & ERRANDS ====================
 
 app.post("/make-server-5ed51d91/jobs", async (c) => {

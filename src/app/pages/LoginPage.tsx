@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { api, setAuthToken, setCurrentUser } from "../services/api";
 
@@ -9,6 +9,23 @@ export function LoginPage() {
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [appSettings, setAppSettings] = useState({
+    appName: "BasaRangu",
+    appTagline: "Home Services & Job Recruitment Platform",
+    logoUrl: "/basarangu.png"
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await api.app.getSettings();
+        setAppSettings(response.settings);
+      } catch (err) {
+        console.error("Failed to fetch app settings", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleSendOtp = async () => {
     if (!phone.trim()) {
@@ -70,15 +87,15 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <img
-            src="/basarangu.png"
-            alt="BasaRangu Logo"
+            src={appSettings.logoUrl}
+            alt={`${appSettings.appName} Logo`}
             className="w-32 h-auto mx-auto mb-4"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
-          <h1 className="text-3xl font-bold text-white mb-2">BasaRangu</h1>
-          <p className="text-zinc-400">Home Services & Job Recruitment Platform</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{appSettings.appName}</h1>
+          <p className="text-zinc-400">{appSettings.appTagline}</p>
         </div>
 
         <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">

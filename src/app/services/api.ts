@@ -61,6 +61,17 @@ export function clearAuth(): void {
 }
 
 export const api = {
+  app: {
+    getSettings: () =>
+      request<{ settings: { appName: string; appTagline: string; logoUrl: string } }>("/app/settings"),
+    updateSettings: (token: string, settings: any) =>
+      request<{ success: boolean; settings: any }>("/app/settings", {
+        method: "PUT",
+        body: settings,
+        token,
+      }),
+  },
+  
   auth: {
     sendOtp: (phone: string) =>
       request<{ success: boolean; otp?: string }>("/auth/send-otp", {
