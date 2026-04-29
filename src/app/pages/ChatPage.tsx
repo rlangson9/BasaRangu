@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { api, getAuthToken, getCurrentUser } from "../services/api";
 
 export function ChatPage() {
   const { jobId } = useParams();
@@ -18,10 +19,13 @@ export function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [job, setJob] = useState<any>(null);
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchJobAndMessages();
+    if (jobId) {
+      fetchJobAndMessages();
+    }
   }, [jobId]);
 
   useEffect(() => {
@@ -33,89 +37,30 @@ export function ChatPage() {
   };
 
   const fetchJobAndMessages = async () => {
+    setLoading(true);
     try {
-      // In a real app, this would fetch from an API
-      // For now, use mock data
-      const mockConversations = [
-        {
-          id: "1",
-          jobTitle: "Plumbing Repair",
-          job: {
-            id: "1",
-            title: "Plumbing Repair",
-            status: "open",
-          },
-          provider: {
-            id: "1",
-            name: "John Doe",
-            role: "provider",
-            avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20plumber%20portrait&image_size=square",
-          },
-          messages: [
-            { id: "1", text: "Hello, I need help with a leaky faucet", sender: "user", userName: "You", time: "10:00 AM", createdAt: "2024-01-15T10:00:00Z" },
-            { id: "2", text: "I can fix that for you. When are you available?", sender: "provider", userName: "John Doe", time: "10:15 AM", createdAt: "2024-01-15T10:15:00Z" },
-            { id: "3", text: "Tomorrow morning would be great", sender: "user", userName: "You", time: "10:20 AM", createdAt: "2024-01-15T10:20:00Z" },
-            { id: "4", text: "I can fix your leaky faucet tomorrow morning", sender: "provider", userName: "John Doe", time: "10:30 AM", createdAt: "2024-01-15T10:30:00Z" },
-          ],
-        },
-        {
-          id: "2",
-          jobTitle: "House Cleaning",
-          job: {
-            id: "2",
-            title: "House Cleaning",
-            status: "in_progress",
-          },
-          provider: {
-            id: "2",
-            name: "Jane Smith",
-            role: "provider",
-            avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20cleaner%20portrait&image_size=square",
-          },
-          messages: [
-            { id: "1", text: "I need a deep cleaning for my 3-bedroom house", sender: "user", userName: "You", time: "2:00 PM", createdAt: "2024-01-14T14:00:00Z" },
-            { id: "2", text: "I can do that for you. How about tomorrow?", sender: "provider", userName: "Jane Smith", time: "2:30 PM", createdAt: "2024-01-14T14:30:00Z" },
-            { id: "3", text: "That works. What time?", sender: "user", userName: "You", time: "2:45 PM", createdAt: "2024-01-14T14:45:00Z" },
-            { id: "4", text: "I'll be at your place by 9 AM", sender: "provider", userName: "Jane Smith", time: "3:00 PM", createdAt: "2024-01-14T15:00:00Z" },
-          ],
-        },
-        {
-          id: "3",
-          jobTitle: "Grocery Shopping",
-          job: {
-            id: "3",
-            title: "Grocery Shopping",
-            status: "completed",
-          },
-          provider: {
-            id: "5",
-            name: "David Brown",
-            role: "runner",
-            avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20errand%20runner%20portrait&image_size=square",
-          },
-          messages: [
-            { id: "1", text: "Can you pick up groceries for me?", sender: "user", userName: "You", time: "10:00 AM", createdAt: "2024-01-13T10:00:00Z" },
-            { id: "2", text: "Sure, send me your list", sender: "runner", userName: "David Brown", time: "10:10 AM", createdAt: "2024-01-13T10:10:00Z" },
-            { id: "3", text: "Milk, eggs, bread, and vegetables", sender: "user", userName: "You", time: "10:15 AM", createdAt: "2024-01-13T10:15:00Z" },
-            { id: "4", text: "I've picked up all your items", sender: "runner", userName: "David Brown", time: "11:30 AM", createdAt: "2024-01-13T11:30:00Z" },
-          ],
-        },
-      ];
+      const [jobResponse, messagesResponse] = await Promise.all([
+        api.jobs.get(jobId!),
+        api.chat.getMessages(jobId!)
+      ]);
 
-      const conversation = mockConversations.find((conv) => conv.id === jobId);
-      if (conversation) {
-        setJob(conversation.job);
-        setMessages(conversation.messages);
+      if (jobResponse.job) {
+        setJob(jobResponse.job);
+      }
+      if (messagesResponse.messages) {
+        setMessages(messagesResponse.messages);
       }
     } catch (error) {
       console.error("Error fetching job and messages:", error);
+      toast.error("Failed to load chat");
+    } finally {
+      setLoading(false);
     }
   };
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
-    // Check for forbidden content
     const forbidden = ["whatsapp", "phone", "email", "@", ".com", "call me", "contact"];
     const hasForbidden = forbidden.some((word) =>
       newMessage.toLowerCase().includes(word)
@@ -128,41 +73,41 @@ export function ChatPage() {
 
     setSending(true);
     try {
-      // In a real app, this would send to an API
-      // For now, just add the message locally
-      const newMsg = {
-        id: Date.now().toString(),
-        text: newMessage,
-        sender: "user",
-        userName: "You",
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        createdAt: new Date().toISOString(),
-      };
+      const token = getAuthToken();
+      if (!token) {
+        toast.error("Please login first");
+        navigate("/login");
+        return;
+      }
 
-      setMessages([...messages, newMsg]);
-      setNewMessage("");
-      
-      // Simulate a reply after a short delay
-      setTimeout(() => {
-        const replyMsg = {
-          id: (Date.now() + 1).toString(),
-          text: "Got it, I'll get back to you shortly!",
-          sender: "provider",
-          userName: job?.title === "Grocery Shopping" ? "David Brown" : job?.title === "House Cleaning" ? "Jane Smith" : "John Doe",
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          createdAt: new Date().toISOString(),
-        };
-        setMessages(prevMessages => [...prevMessages, replyMsg]);
-      }, 1500);
-    } catch (error) {
+      const response = await api.chat.sendMessage(token, jobId!, newMessage);
+
+      if (response.success) {
+        setMessages([...messages, response.message]);
+        setNewMessage("");
+      }
+    } catch (error: any) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message");
+      toast.error(error.message || "Failed to send message");
     } finally {
       setSending(false);
     }
   };
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getCurrentUser();
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen bg-zinc-950 items-center justify-center">
+        <div className="text-zinc-400">Loading chat...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-zinc-950">
@@ -203,7 +148,7 @@ export function ChatPage() {
             </div>
           ) : (
             messages.map((message) => {
-              const isOwnMessage = message.sender === "user";
+              const isOwnMessage = message.userId === user?.id;
               return (
                 <div
                   key={message.id}
@@ -227,7 +172,7 @@ export function ChatPage() {
                         isOwnMessage ? "text-white/70" : "text-zinc-500"
                       }`}
                     >
-                      {message.time}
+                      {formatTime(message.createdAt)}
                     </div>
                   </div>
                 </div>
@@ -240,9 +185,7 @@ export function ChatPage() {
 
       <div className="border-t border-zinc-800 bg-zinc-900">
         <div className="max-w-screen-xl mx-auto px-4 py-4">
-          {/* Action Buttons */}
           <div className="mb-4 space-y-3">
-            {/* Errand Actions */}
             {job?.status === "in_progress" && (
               <div className="flex gap-2 flex-wrap">
                 <Button
@@ -272,7 +215,6 @@ export function ChatPage() {
               </div>
             )}
 
-            {/* Recruitment Actions */}
             {job?.status === "open" && (
               <div className="flex gap-2 flex-wrap">
                 <Button
@@ -315,7 +257,6 @@ export function ChatPage() {
               </div>
             )}
 
-            {/* Completed Job Actions */}
             {job?.status === "completed" && (
               <div className="flex gap-2 flex-wrap">
                 <Button
@@ -340,7 +281,6 @@ export function ChatPage() {
               </div>
             )}
 
-            {/* More Options Menu */}
             <div className="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -350,7 +290,7 @@ export function ChatPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-zinc-800 border-zinc-700">
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
                     onClick={() => {
                       toast.info("Report Submitted", {
@@ -362,30 +302,18 @@ export function ChatPage() {
                     <AlertTriangle className="w-4 h-4 mr-2 text-red-400" />
                     Report User
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
                     onClick={() => navigate(`/job/${jobId}`)}
                   >
                     <FileText className="w-4 h-4 mr-2 text-teal-400" />
                     View Job Details
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
-                    onClick={() => {
-                      toast.info("Chat Archived", {
-                        description: "This conversation has been archived.",
-                        duration: 3000,
-                      });
-                    }}
-                  >
-                    Archive Chat
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
 
-          {/* Message Input */}
           <div className="flex items-center gap-2">
             <Input
               type="text"

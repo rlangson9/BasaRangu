@@ -1,83 +1,178 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { api, setAuthToken, setCurrentUser } from "../services/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("user");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState<"phone" | "otp">("phone");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = () => {
-    // Store dummy user data in localStorage
-    const dummyUser = {
-      id: "1",
-      name: "Test User",
-      phone: phone || "+1 234 567 8900",
-      role: role,
+  const handleSendOtp = async () => {
+    if (!phone.trim()) {
+      setError("Please enter your phone number");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      await api.auth.sendOtp(phone);
+      setStep("otp");
+    } catch (err: any) {
+      setError(err.message || "Failed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) {
+      setError("Please enter the OTP");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await api.auth.verifyOtp(phone, otp);
+      setAuthToken(response.token);
+      setCurrentUser(response.user);
+      navigate(`/${response.user.activeRole || "user"}`);
+    } catch (err: any) {
+      setError(err.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = () => {
+    const demoUser = {
+      id: "demo-user-1",
+      name: "Demo User",
+      phone: "+1234567890",
+      role: "user",
       verified: true,
       wallet: 1000,
       rating: 4.8
     };
-    localStorage.setItem("user", JSON.stringify(dummyUser));
-    
-    // Redirect to appropriate dashboard based on role
-    navigate(`/${role}`);
+    setCurrentUser(demoUser);
+    setAuthToken("demo-token");
+    navigate("/user");
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img 
-            src="/basarangu.png" 
-            alt="BasaRangu Logo" 
+          <img
+            src="/basarangu.png"
+            alt="BasaRangu Logo"
             className="w-32 h-auto mx-auto mb-4"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
           <h1 className="text-3xl font-bold text-white mb-2">BasaRangu</h1>
           <p className="text-zinc-400">Home Services & Job Recruitment Platform</p>
         </div>
 
         <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-          <h2 className="text-xl font-semibold text-white mb-4">Login / Register</h2>
-          
+          <h2 className="text-xl font-semibold text-white mb-4">
+            {step === "phone" ? "Login / Register" : "Verify OTP"}
+          </h2>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-md text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                placeholder="+1 234 567 8900"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white"
-              />
-            </div>
+            {step === "phone" ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+263 771 234 567"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Role
-              </label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white"
-              >
-                <option value="user">User (Service Seeker)</option>
-                <option value="provider">Service Provider</option>
-                <option value="runner">Errand Runner</option>
-                <option value="recruiter">Recruiter</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
+                <button
+                  onClick={handleSendOtp}
+                  disabled={loading}
+                  className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-zinc-700 text-white py-2 px-4 rounded-md"
+                >
+                  {loading ? "Sending..." : "Send OTP"}
+                </button>
 
-            <button
-              className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-md"
-              onClick={handleLogin}
-            >
-              Login (No OTP)
-            </button>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-zinc-700"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-zinc-900 text-zinc-400">or</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleDemoLogin}
+                  className="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md border border-zinc-700"
+                >
+                  Continue with Demo
+                </button>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-2">
+                    Enter OTP sent to {phone}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="000000"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white text-center text-2xl tracking-widest"
+                    maxLength={6}
+                  />
+                </div>
+
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={loading || otp.length !== 6}
+                  className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-zinc-700 text-white py-2 px-4 rounded-md"
+                >
+                  {loading ? "Verifying..." : "Verify & Login"}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setStep("phone");
+                    setOtp("");
+                  }}
+                  className="w-full text-zinc-400 hover:text-white text-sm py-2"
+                >
+                  Change phone number
+                </button>
+              </>
+            )}
           </div>
         </div>
+
+        <p className="text-center text-zinc-500 text-sm mt-4">
+          By continuing, you agree to our Terms of Service
+        </p>
       </div>
     </div>
   );

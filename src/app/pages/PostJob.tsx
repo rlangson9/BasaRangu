@@ -5,9 +5,9 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ArrowLeft } from "lucide-react";
-import { projectId, publicAnonKey } from "../../../utils/supabase/info";
 import { toast } from "sonner";
 import { PhotoUpload } from "../components/PhotoUpload";
+import { api, getAuthToken } from "../services/api";
 
 export function PostJob() {
   const navigate = useNavigate();
@@ -22,16 +22,23 @@ export function PostJob() {
   });
   const [providerId, setProviderId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const categories = {
+    service: ["Cleaning", "Plumbing", "Electrical", "Carpentry", "Moving", "Repair", "Painting", "Gardening"],
+    errand: ["Delivery", "Shopping", "Pickup", "Drop-off", "Document", "Other"],
+    recruitment: ["Technology", "Finance", "Healthcare", "Retail", "Manufacturing", "Other"],
+  };
 
   useEffect(() => {
-    // Get provider ID and edit ID from query parameters
     const searchParams = new URLSearchParams(location.search);
-    const provider = searchParams.get('provider');
+    const provider = searchParams.get("provider");
     if (provider) {
       setProviderId(provider);
     }
-    
-    const editId = searchParams.get('edit');
+
+    const editId = searchParams.get("edit");
     if (editId) {
       setIsEditMode(true);
       fetchJobForEdit(editId);
@@ -40,61 +47,22 @@ export function PostJob() {
 
   const fetchJobForEdit = async (jobId: string) => {
     try {
-      // In a real app, this would fetch from an API
-      // For now, use mock data
-      const mockJobs = [
-        {
-          id: "1",
-          title: "Plumbing Repair",
-          description: "Fix leaky faucet in kitchen",
-          category: "Plumbing",
-          type: "service",
-          budget: "1000",
-          location: "Harare, Zimbabwe",
-        },
-        {
-          id: "2",
-          title: "House Cleaning",
-          description: "Deep cleaning for 3-bedroom house",
-          category: "Cleaning",
-          type: "service",
-          budget: "2000",
-          location: "Bulawayo, Zimbabwe",
-        },
-        {
-          id: "3",
-          title: "Electrical Installation",
-          description: "Install new lighting fixtures",
-          category: "Electrical",
-          type: "service",
-          budget: "1500",
-          location: "Mutare, Zimbabwe",
-        },
-      ];
-      
-      const job = mockJobs.find(j => j.id === jobId);
-      if (job) {
+      const response = await api.jobs.get(jobId);
+      if (response.job) {
+        const job = response.job;
         setFormData({
-          title: job.title,
-          description: job.description,
-          category: job.category,
-          type: job.type,
-          budget: job.budget,
-          location: job.location,
+          title: job.title || "",
+          description: job.description || "",
+          category: job.category || "",
+          type: job.type || "service",
+          budget: job.budget || "",
+          location: job.location || "",
         });
       }
     } catch (error) {
       console.error("Error fetching job for edit:", error);
       toast.error("Failed to load job for editing");
     }
-  };
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-
-  const categories = {
-    service: ["Cleaning", "Plumbing", "Electrical", "Carpentry", "Moving", "Repair", "Painting", "Gardening"],
-    errand: ["Delivery", "Shopping", "Pickup", "Drop-off", "Document", "Other"],
-    recruitment: ["Technology", "Finance", "Healthcare", "Retail", "Manufacturing", "Other"],
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,32 +75,33 @@ export function PostJob() {
 
     setSubmitting(true);
     try {
-      const searchParams = new URLSearchParams(location.search);
-      const jobId = searchParams.get('edit');
-      
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-5ed51d91/jobs${isEditMode && jobId ? `/${jobId}` : ''}`,
-        {
-          method: isEditMode ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ ...formData, photos, providerId }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success(isEditMode ? "Job updated successfully!" : "Job posted successfully! This job has been added to the provider's history.");
-        navigate(-1);
-      } else {
-        toast.error(isEditMode ? "Failed to update job" : "Failed to post job");
+      const token = getAuthToken();
+      if (!token) {
+        toast.error("Please login first");
+        navigate("/login");
+        return;
       }
-    } catch (error) {
+
+      const jobData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        type: formData.type,
+        budget: parseFloat(formData.budget),
+        location: formData.location,
+        photos,
+        providerId,
+      };
+
+      const response = await api.jobs.create(token, jobData);
+
+      if (response.success) {
+        toast.success(isEditMode ? "Job updated successfully!" : "Job posted successfully!");
+        navigate(-1);
+      }
+    } catch (error: any) {
       console.error(isEditMode ? "Error updating job:" : "Error posting job:", error);
-      toast.error(isEditMode ? "Failed to update job" : "Failed to post job");
+      toast.error(error.message || (isEditMode ? "Failed to update job" : "Failed to post job"));
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +123,7 @@ export function PostJob() {
 
       <div className="max-w-screen-xl mx-auto px-4 py-6">
         <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-          <h1 className="text-2xl font-bold text-white mb-6">{isEditMode ? 'Edit Job' : 'Post a Job'}</h1>
+          <h1 className="text-2xl font-bold text-white mb-6">{isEditMode ? "Edit Job" : "Post a Job"}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -201,7 +170,7 @@ export function PostJob() {
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {categories[formData.type as keyof typeof categories].map((cat) => (
+                  {categories[formData.type as keyof typeof categories]?.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {cat}
                     </SelectItem>
@@ -258,11 +227,7 @@ export function PostJob() {
               <label className="block text-sm font-medium text-zinc-300 mb-2">
                 Upload Photos
               </label>
-              <PhotoUpload
-                photos={photos}
-                onPhotosChange={setPhotos}
-                maxPhotos={5}
-              />
+              <PhotoUpload photos={photos} onPhotosChange={setPhotos} maxPhotos={5} />
             </div>
 
             <Button
@@ -270,7 +235,7 @@ export function PostJob() {
               disabled={submitting}
               className="w-full bg-teal-500 hover:bg-teal-600 text-white h-12"
             >
-              {submitting ? (isEditMode ? "Updating..." : "Posting...") : (isEditMode ? "Update Job" : "Post Job")}
+              {submitting ? (isEditMode ? "Updating..." : "Posting...") : isEditMode ? "Update Job" : "Post Job"}
             </Button>
           </form>
         </div>
