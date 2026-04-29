@@ -164,16 +164,17 @@ export function VIPSubscription() {
         </div>
 
         {/* Plan Selection */}
-        <div className="mb-8">
+        <div className="mb-8 mt-[18px]">
           <h3 className="text-white font-bold text-lg mb-4">Choose Your Plan</h3>
           <Tabs value={selectedPlan} onValueChange={setSelectedPlan}>
             <TabsList className="grid grid-cols-3 gap-1 w-full">
               <TabsTrigger 
                 value="monthly" 
-                className={`p-2 rounded-md text-center transition-all ${selectedPlan === "monthly" ? "bg-teal-600 border-2 border-teal-400 text-white" : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800"}`}
+                className="ml-3 mr-3 pl-[2px] pr-[2px]"
+                style={{ color: selectedPlan === "monthly" ? "#fdc800" : "#8e8e90" }}
               >
                 <div className="text-[9px] font-medium">Monthly</div>
-                <div className={`font-bold text-sm mt-0.5 ${selectedPlan === "monthly" ? "text-white" : "text-zinc-300"}`}>
+                <div className="font-bold text-sm mt-0.5" style={{ color: "#fdc800" }}>
                   ${plans.monthly.price}
                 </div>
               </TabsTrigger>
@@ -184,10 +185,10 @@ export function VIPSubscription() {
                 </div>
                 <TabsTrigger 
                   value="quarterly" 
-                  className={`p-2 rounded-md text-center transition-all ${selectedPlan === "quarterly" ? "bg-teal-600 border-2 border-teal-400 text-white" : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800"}`}
+                  className="-ml-[17px] -mr-[17px]"
                 >
-                  <div className="text-[9px] font-medium">3 Months</div>
-                  <div className={`font-bold text-sm mt-0.5 ${selectedPlan === "quarterly" ? "text-white" : "text-zinc-300"}`}>
+                  <div className="text-[9px] font-medium text-[#8e8e90]">3 Months</div>
+                  <div className="font-bold text-sm mt-0.5" style={{ color: "#fdc800" }}>
                     ${plans.quarterly.price}
                   </div>
                   <div className="text-yellow-400 text-[8px] mt-0.5">{plans.quarterly.savings}</div>
@@ -200,10 +201,10 @@ export function VIPSubscription() {
                 </div>
                 <TabsTrigger 
                   value="yearly" 
-                  className={`p-2 rounded-md text-center transition-all ${selectedPlan === "yearly" ? "bg-teal-600 border-2 border-teal-400 text-white" : "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:bg-zinc-800"}`}
+                  className="-ml-[19px] -mr-[19px] pl-[7px] pr-[7px]"
                 >
-                  <div className="text-[9px] font-medium">Yearly</div>
-                  <div className={`font-bold text-sm mt-0.5 ${selectedPlan === "yearly" ? "text-white" : "text-zinc-300"}`}>
+                  <div className="text-[9px] font-medium text-[#8e8e90]">Yearly</div>
+                  <div className="font-bold text-sm mt-0.5 text-[#fdc800]">
                     ${plans.yearly.price}
                   </div>
                   <div className="text-green-400 text-[8px] mt-0.5">{plans.yearly.savings}</div>
