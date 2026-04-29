@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { api, setAuthToken, setCurrentUser } from "../services/api";
+import { usePlatform } from "../hooks/usePlatform";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { isWeb } = usePlatform();
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"phone" | "otp">("phone");
@@ -82,6 +84,38 @@ export function LoginPage() {
     navigate("/user");
   };
 
+  const handleProviderLogin = () => {
+    const demoProvider = {
+      id: "demo-provider-1",
+      name: "Demo Provider",
+      phone: "+1987654321",
+      role: "provider",
+      activeRole: "provider",
+      verified: true,
+      wallet: 500,
+      rating: 4.5
+    };
+    setCurrentUser(demoProvider);
+    setAuthToken("demo-provider-token");
+    navigate("/provider");
+  };
+
+  const handleAdminLogin = () => {
+    const adminUser = {
+      id: "admin-1",
+      name: "Admin",
+      phone: "+9999999999",
+      role: "admin",
+      activeRole: "admin",
+      verified: true,
+      wallet: 0,
+      rating: 5.0
+    };
+    setCurrentUser(adminUser);
+    setAuthToken("admin-token");
+    navigate("/admin");
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -97,6 +131,33 @@ export function LoginPage() {
           <h1 className="text-3xl font-bold text-white mb-2">{appSettings.appName}</h1>
           <p className="text-zinc-400">{appSettings.appTagline}</p>
         </div>
+
+        {/* Quick Test Buttons (Top) */}
+        {isWeb && (
+          <div className="mb-4 space-y-2">
+            <div className="text-white text-sm mb-2 text-center">Quick Testing:</div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={handleDemoLogin}
+                className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-md text-sm"
+              >
+                User
+              </button>
+              <button
+                onClick={handleProviderLogin}
+                className="bg-green-600 hover:bg-green-700 text-white py-2 px-2 rounded-md text-sm"
+              >
+                Provider
+              </button>
+              <button
+                onClick={handleAdminLogin}
+                className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-2 rounded-md text-sm"
+              >
+                Admin
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
           <h2 className="text-xl font-semibold text-white mb-4">

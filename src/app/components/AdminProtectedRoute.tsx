@@ -1,10 +1,13 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { usePlatform } from "../hooks/usePlatform";
+import { getCurrentUser } from "../services/api";
 
 export const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isWeb } = usePlatform();
   const navigate = useNavigate();
+  const user = getCurrentUser();
+  const isAdminUser = user?.role === "admin";
 
   useEffect(() => {
     if (!isWeb) {
