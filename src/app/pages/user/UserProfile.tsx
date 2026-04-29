@@ -6,7 +6,7 @@ import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Camera } from "lucide-react";
+import { ArrowLeft, Save, Camera, Upload, CheckCircle } from "lucide-react";
 
 export function UserProfile() {
   const navigate = useNavigate();
@@ -18,11 +18,12 @@ export function UserProfile() {
     city: "Harare, Zimbabwe",
     bio: "",
     avatar: "",
+    idImage: "",
+    verified: false,
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Load existing user data from localStorage
     const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
     if (existingUser) {
       setUser({
@@ -33,6 +34,8 @@ export function UserProfile() {
         city: existingUser.city || "Harare, Zimbabwe",
         bio: existingUser.bio || "",
         avatar: existingUser.avatar || "",
+        idImage: existingUser.idImage || "",
+        verified: existingUser.verified || false,
       });
     }
   }, []);
@@ -42,8 +45,6 @@ export function UserProfile() {
     setLoading(true);
     
     try {
-      // In a real app, this would save to an API
-      // For now, save to localStorage
       const updatedUser = {
         ...JSON.parse(localStorage.getItem("user") || "{}"),
         ...user,
@@ -61,12 +62,25 @@ export function UserProfile() {
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // In a real app, this would upload the image
-    // For now, use a placeholder
     setUser({
       ...user,
       avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20user%20portrait&image_size=square",
     });
+  };
+
+  const handleIdUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUser({
+          ...user,
+          idImage: reader.result as string,
+        });
+        toast.success("ID uploaded successfully");
+      };
+      reader.readAsDataURL(files[0]);
+    }
   };
 
   const zimbabweCities = [
@@ -102,7 +116,6 @@ export function UserProfile() {
 
       <div className="max-w-screen-xl mx-auto px-4 py-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar Upload */}
           <div className="flex flex-col items-center">
             <div className="relative mb-4">
               <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-teal-500">
@@ -129,7 +142,6 @@ export function UserProfile() {
               </label>
             </div>
             
-            {/* VIP Subscription Button */}
             <Button 
               onClick={() => navigate("/user/vip")}
               className="bg-white text-teal-700 hover:bg-teal-50 mt-2"
@@ -138,7 +150,6 @@ export function UserProfile() {
             </Button>
           </div>
 
-          {/* Personal Information */}
           <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
             <h2 className="text-lg font-semibold text-white mb-4">Personal Information</h2>
             
@@ -224,7 +235,76 @@ export function UserProfile() {
             </div>
           </div>
 
-          {/* Submit Button */}
+          <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">Verification</h2>
+              {user.verified && (
+                <div className="flex items-center gap-2 text-green-400">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">Verified</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-zinc-800/50 rounded-lg p-4 border border-zinc-700">
+                <p className="text-sm text-zinc-400 mb-4">
+                  Upload a valid government-issued ID (passport, driver's license, or national ID card) to get verified.
+                </p>
+                
+                {user.idImage ? (
+                  <div className="space-y-4">
+                    <img 
+                      src={user.idImage} 
+                      alt="ID Document" 
+                      className="w-full rounded-lg object-contain max-h-64 bg-zinc-900"
+                    />
+                    <div className="flex gap-2">
+                      <label className="flex-1 cursor-pointer">
+                        <Button type="button" variant="outline" className="w-full border-zinc-700 text-white">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Change ID
+                        </Button>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleIdUpload}
+                        />
+                      </label>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        onClick={() => setUser({ ...user, idImage: "" })}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer">
+                    <div className="border-2 border-dashed border-zinc-700 rounded-lg p-8 text-center hover:border-teal-500 hover:bg-teal-500/10 transition-colors">
+                      <Upload className="w-10 h-10 text-zinc-500 mx-auto mb-3" />
+                      <p className="text-sm font-medium text-white mb-1">
+                        Upload ID Document
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        Click or drag and drop to upload
+                      </p>
+                    </div>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleIdUpload}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+
           <Button 
             type="submit" 
             className="w-full bg-teal-500 hover:bg-teal-600 text-white"
