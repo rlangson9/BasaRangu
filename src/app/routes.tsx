@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import App from "./App";
-import { LoginPage } from "./pages/LoginPage";
+import LoginPage from "./pages/LoginPage";
 import { UserHome } from "./pages/user/UserHome";
 import { UserJobs } from "./pages/user/UserJobs";
 import { UserChat } from "./pages/user/UserChat";
