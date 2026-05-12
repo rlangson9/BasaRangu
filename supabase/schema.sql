@@ -1,114 +1,138 @@
--- BasaRangu Database Schema
--- Run this in Supabase SQL Editor
+-- BasaRangu PostgreSQL Schema
 
--- Enable UUID extension
+-- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- KV Store Table (main data storage)
-CREATE TABLE IF NOT EXISTS kv_store_5ed51d91 (
-  key TEXT NOT NULL PRIMARY KEY,
-  value JSONB NOT NULL,
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  phone TEXT UNIQUE NOT NULL,
+  name TEXT DEFAULT '',
+  avatar TEXT DEFAULT '',
+  email TEXT,
+  address TEXT,
+  city TEXT,
+  roles TEXT[] DEFAULT ARRAY['user']::TEXT[],
+  active_role TEXT DEFAULT 'user',
+  verified BOOLEAN DEFAULT false,
+  wallet DECIMAL(12,2) DEFAULT 0,
+  rating DECIMAL(3,2) DEFAULT 0,
+  review_count INTEGER DEFAULT 0,
+  id_verified BOOLEAN DEFAULT false,
+  id_document_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index for prefix queries (used by getByPrefix)
-CREATE INDEX IF NOT EXISTS idx_kv_store_key_prefix ON kv_store_5ed51d91 (key varchar_pattern_ops);
-
--- Enable Row Level Security
-ALTER TABLE kv_store_5ed51d91 ENABLE ROW LEVEL SECURITY;
-
--- Policy: Service role can do everything
-CREATE POLICY "Service role full access" ON kv_store_5ed51d91
-  FOR ALL USING (auth.role() = 'service_role');
-
--- Policy: Authenticated users can read their own data
-CREATE POLICY "Users can read their own data" ON kv_store_5ed51d91
-  FOR SELECT USING (
-    key LIKE 'user:' || (SELECT id FROM auth.uid() LIMIT 1) || '%'
-    OR key LIKE 'token:%'
-  );
-
--- Function to auto-update updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger for auto-update
-CREATE TRIGGER update_kv_store_updated_at
-  BEFORE UPDATE ON kv_store_5ed51d91
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
--- Analytics tables for reporting (optional enhanced tracking)
-CREATE TABLE IF NOT EXISTS analytics_events (
+-- Jobs table
+CREATE TABLE IF NOT EXISTS jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  event_type TEXT NOT NULL,
-  user_id TEXT,
-  metadata JSONB DEFAULT '{}',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  user_id UUID REFERENCES users(id),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL,
+  type TEXT DEFAULT 'errand',
+  location TEXT NOT NULL,
+  budget DECIMAL(10,2),
+  urgency TEXT DEFAULT 'normal',
+  status TEXT DEFAULT 'open',
+  accepted_applicant_id UUID,
+  payment_id UUID,
+  dispute_id UUID,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events (event_type);
-CREATE INDEX IF NOT EXISTS idx_analytics_events_user ON analytics_events (user_id);
-CREATE INDEX IF NOT EXISTS idx_analytics_events_created ON analytics_events (created_at);
-
--- Chat message history for longer retention (beyond KV store)
-CREATE TABLE IF NOT EXISTS message_history (
+-- Applications table
+CREATE TABLE IF NOT EXISTS applications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  job_id TEXT NOT NULL,
-  user_id TEXT NOT NULL,
-  user_name TEXT,
-  user_avatar TEXT,
-  text TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_message_history_job ON message_history (job_id);
-CREATE INDEX IF NOT EXISTS idx_message_history_created ON message_history (created_at);
-
--- Job applications history
-CREATE TABLE IF NOT EXISTS application_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  job_id TEXT NOT NULL,
-  applicant_id TEXT NOT NULL,
+  job_id UUID REFERENCES jobs(id),
+  user_id UUID REFERENCES users(id),
   quote DECIMAL(10,2),
   message TEXT,
   status TEXT DEFAULT 'pending',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_application_history_job ON application_history (job_id);
-CREATE INDEX IF NOT EXISTS idx_application_history_applicant ON application_history (applicant_id);
-
--- Payments ledger for compliance
-CREATE TABLE IF NOT EXISTS payment_ledger (
+-- Payments table
+CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  payment_id TEXT UNIQUE NOT NULL,
-  job_id TEXT NOT NULL,
-  user_id TEXT NOT NULL,
+  job_id UUID REFERENCES jobs(id),
+  user_id UUID REFERENCES users(id),
   amount DECIMAL(10,2) NOT NULL,
   commission DECIMAL(10,2),
   provider_amount DECIMAL(10,2),
-  method TEXT,
-  status TEXT DEFAULT 'pending',
+  method TEXT NOT NULL,
   reference TEXT,
+  status TEXT DEFAULT 'pending',
+  refund_amount DECIMAL(10,2),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   released_at TIMESTAMPTZ
 );
 
-CREATE INDEX IF NOT EXISTS idx_payment_ledger_job ON payment_ledger (job_id);
-CREATE INDEX IF NOT EXISTS idx_payment_ledger_user ON payment_ledger (user_id);
-CREATE INDEX IF NOT EXISTS idx_payment_ledger_status ON payment_ledger (status);
+-- Reviews table
+CREATE TABLE IF NOT EXISTS reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID REFERENCES jobs(id),
+  from_user_id UUID REFERENCES users(id),
+  target_user_id UUID REFERENCES users(id),
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- Comments for documentation
-COMMENT ON TABLE kv_store_5ed51d91 IS 'Main key-value store for BasaRangu app data';
-COMMENT ON TABLE analytics_events IS 'Event tracking for analytics';
-COMMENT ON TABLE message_history IS 'Long-term chat message storage';
-COMMENT ON TABLE application_history IS 'Job application tracking';
-COMMENT ON TABLE payment_ledger IS 'Payment transactions ledger for compliance';
+-- Messages table
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID REFERENCES jobs(id),
+  user_id UUID REFERENCES users(id),
+  text TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Disputes table
+CREATE TABLE IF NOT EXISTS disputes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID REFERENCES jobs(id),
+  user_id UUID REFERENCES users(id),
+  reason TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'pending',
+  resolution TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  resolved_at TIMESTAMPTZ
+);
+
+-- Analytics events table
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  event_type TEXT NOT NULL,
+  user_id UUID REFERENCES users(id),
+  metadata JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_jobs_user_id ON jobs(user_id);
+CREATE INDEX idx_jobs_status ON jobs(status);
+CREATE INDEX idx_jobs_category ON jobs(category);
+CREATE INDEX idx_applications_job_id ON applications(job_id);
+CREATE INDEX idx_applications_user_id ON applications(user_id);
+CREATE INDEX idx_payments_job_id ON payments(job_id);
+CREATE INDEX idx_payments_status ON payments(status);
+CREATE INDEX idx_reviews_target_user_id ON reviews(target_user_id);
+CREATE INDEX idx_messages_job_id ON messages(job_id);
+CREATE INDEX idx_disputes_status ON disputes(status);
+CREATE INDEX idx_users_phone ON users(phone);
+
+-- KV Store for caching/sessions (keep for simple use cases)
+CREATE TABLE IF NOT EXISTS kv_store (
+  id SERIAL PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  value TEXT NOT NULL,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_kv_store_key ON kv_store(key);
+CREATE INDEX idx_kv_store_expires ON kv_store(expires_at);
