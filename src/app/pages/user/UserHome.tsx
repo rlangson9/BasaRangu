@@ -124,9 +124,9 @@ export function UserHome() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate("/user/chat")}
-                className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-white hover:bg-zinc-700 transition-colors"
+                className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-zinc-700 transition-colors"
               >
-                <MessageSquare className="w-5 h-5" />
+                <MessageSquare className="w-5 h-5" style={{ color: "#f58300" }} />
               </button>
               <RoleSwitcher />
             </div>
