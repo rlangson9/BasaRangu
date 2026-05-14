@@ -11,6 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { api, getAuthToken, getCurrentUser } from "../services/api";
+import { IcebreakerButtons, IcebreakerQuickButtons } from "../components/IcebreakerButtons";
+import { IcebreakerContext } from "../utils/icebreakers";
+import { QuoteDialog, AcceptOfferDialog, EscrowDialog } from "../components/QuoteDialog";
 
 export function ChatPage() {
   const { jobId } = useParams();
@@ -20,6 +23,11 @@ export function ChatPage() {
   const [job, setJob] = useState<any>(null);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [icebreakerContext, setIcebreakerContext] = useState<IcebreakerContext>({});
+  const [quoteDialogOpen, setQuoteDialogOpen] = useState(false);
+  const [acceptOfferDialogOpen, setAcceptOfferDialogOpen] = useState(false);
+  const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
+  const [receivedOffer, setReceivedOffer] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,6 +54,17 @@ export function ChatPage() {
 
       if (jobResponse.job) {
         setJob(jobResponse.job);
+        setIcebreakerContext({
+          jobTitle: jobResponse.job.title,
+          jobCategory: jobResponse.job.category,
+          jobBudget: jobResponse.job.budget,
+          jobLocation: jobResponse.job.location,
+          providerName: jobResponse.job.providerName || jobResponse.job.provider?.name,
+          providerRating: jobResponse.job.providerRating || jobResponse.job.provider?.rating,
+          providerExperience: jobResponse.job.providerExperience || jobResponse.job.provider?.experience,
+          senderRole: user?.role === "user" ? "user" : "provider",
+          recipientRole: user?.role === "user" ? "provider" : "user",
+        });
       }
       if (messagesResponse.messages) {
         setMessages(messagesResponse.messages);
@@ -95,6 +114,10 @@ export function ChatPage() {
   };
 
   const user = getCurrentUser();
+
+  const handleIcebreakerSelect = (message: string) => {
+    setNewMessage(message);
+  };
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -185,6 +208,15 @@ export function ChatPage() {
 
       <div className="border-t border-zinc-800 bg-zinc-900">
         <div className="max-w-screen-xl mx-auto px-4 py-4">
+          {messages.length === 0 && (
+            <div className="mb-4">
+              <IcebreakerButtons 
+                context={icebreakerContext} 
+                onSelect={handleIcebreakerSelect}
+                showQuickReplies={true}
+              />
+            </div>
+          )}
           <div className="mb-4 space-y-3">
             {job?.status === "in_progress" && (
               <div className="flex gap-2 flex-wrap">
@@ -281,6 +313,75 @@ export function ChatPage() {
               </div>
             )}
 
+            {user?.role === "provider" && job?.status === "open" && (
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-medium text-amber-400 mb-1">
+                      Send a Quote
+                    </div>
+                    <div className="text-xs text-zinc-400">
+                      Provide a formal quote for this job
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setQuoteDialogOpen(true)}
+                    size="sm"
+                    className="bg-amber-500 hover:bg-amber-600 text-white"
+                  >
+                    <FileText className="w-4 h-4 mr-1" />
+                    Quote
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {user?.role === "user" && job?.status === "open" && !job?.escrowInitiated && (
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-medium text-blue-400 mb-1">
+                      Secure Payment
+                    </div>
+                    <div className="text-xs text-zinc-400">
+                      Initiate escrow to protect both parties
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setEscrowDialogOpen(true)}
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    <DollarSign className="w-4 h-4 mr-1" />
+                    Escrow
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {receivedOffer && (
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-medium text-green-400 mb-1">
+                      Job Offer Received!
+                    </div>
+                    <div className="text-xs text-zinc-400">
+                      ${receivedOffer.amount} - {receivedOffer.message || "Tap to review"}
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setAcceptOfferDialogOpen(true)}
+                    size="sm"
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Review
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -314,6 +415,15 @@ export function ChatPage() {
             </div>
           </div>
 
+          {messages.length > 0 && (
+            <div className="mb-4">
+              <IcebreakerQuickButtons 
+                context={icebreakerContext} 
+                onSelect={handleIcebreakerSelect}
+              />
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <Input
               type="text"
@@ -333,6 +443,74 @@ export function ChatPage() {
           </div>
         </div>
       </div>
+
+      <QuoteDialog
+        open={quoteDialogOpen}
+        onOpenChange={setQuoteDialogOpen}
+        jobTitle={job?.title || ""}
+        jobId={jobId || ""}
+        onQuoteSent={(quote) => {
+          setMessages([...messages, {
+            id: `msg-${Date.now()}`,
+            text: `📋 Quote sent: $${quote.amount} - ${quote.description}`,
+            userId: user?.id,
+            userName: user?.name || "You",
+            createdAt: Date.now(),
+            type: "quote",
+            quote,
+          }]);
+        }}
+      />
+
+      <AcceptOfferDialog
+        open={acceptOfferDialogOpen}
+        onOpenChange={setAcceptOfferDialogOpen}
+        offer={receivedOffer || { amount: 0, fromName: "Client" }}
+        onAccept={() => {
+          if (receivedOffer) {
+            setMessages([...messages, {
+              id: `msg-${Date.now()}`,
+              text: `✅ Offer accepted: $${receivedOffer.amount}`,
+              userId: user?.id,
+              userName: user?.name || "You",
+              createdAt: Date.now(),
+              type: "offer_accepted",
+            }]);
+            setReceivedOffer(null);
+          }
+        }}
+        onDecline={() => {
+          if (receivedOffer) {
+            setMessages([...messages, {
+              id: `msg-${Date.now()}`,
+              text: `❌ Offer declined`,
+              userId: user?.id,
+              userName: user?.name || "You",
+              createdAt: Date.now(),
+              type: "offer_declined",
+            }]);
+            setReceivedOffer(null);
+          }
+        }}
+      />
+
+      <EscrowDialog
+        open={escrowDialogOpen}
+        onOpenChange={setEscrowDialogOpen}
+        jobTitle={job?.title || ""}
+        amount={job?.budget || 0}
+        onInitiate={() => {
+          setJob({ ...job, escrowInitiated: true });
+          setMessages([...messages, {
+            id: `msg-${Date.now()}`,
+            text: `🔒 Escrow initiated: $${job?.budget} secured`,
+            userId: user?.id,
+            userName: user?.name || "You",
+            createdAt: Date.now(),
+            type: "escrow_initiated",
+          }]);
+        }}
+      />
     </div>
   );
 }
