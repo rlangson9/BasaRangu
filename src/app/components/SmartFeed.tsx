@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 import { Star, Zap, Heart, Bookmark, MessageSquare, Eye, DollarSign, MapPin, Clock } from "lucide-react";
 import { api, getAuthToken } from "../services/api";
 import { MatchScoreBadge } from "./MatchScore";
+import { VerificationBadge } from "./Verification";
+import { VerificationTier, VerificationStatus } from "../types/verification";
 
 interface SmartFeedProps {
   role?: "user" | "provider" | "runner";
@@ -183,7 +185,12 @@ export function SmartFeed({ role = "user" }: SmartFeedProps) {
                         {(item.name || "P").charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <h3 className="text-white font-semibold">{item.name || "Service Provider"}</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-white font-semibold">{item.name || "Service Provider"}</h3>
+                          {item.verification && (
+                            <VerificationBadge status={item.verification} size="sm" />
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-sm">
                           {item.avg_rating && (
                             <div className="flex items-center gap-1 text-amber-400">
@@ -295,6 +302,11 @@ function getMockFeedData(role: string): FeedItem[] {
         application_count: 47,
         category_match: 8.5,
         matchScore: 92,
+        verification: {
+          tier: VerificationTier.ADVANCED,
+          verifiedAt: Date.now() - 86400000 * 30,
+          documents: { idDocument: true, backgroundCheck: true, skillCertifications: ["Licensed Plumber"] }
+        } as VerificationStatus,
       },
       {
         id: "2",
@@ -305,6 +317,11 @@ function getMockFeedData(role: string): FeedItem[] {
         application_count: 32,
         category_match: 7.2,
         matchScore: 85,
+        verification: {
+          tier: VerificationTier.INTERMEDIATE,
+          verifiedAt: Date.now() - 86400000 * 15,
+          documents: { idDocument: true, backgroundCheck: false, skillCertifications: [] }
+        } as VerificationStatus,
       },
     ];
   } else {
