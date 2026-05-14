@@ -284,7 +284,7 @@ export function ChatPage() {
               </div>
             )}
 
-            {job?.status === "open" && (
+            {(job?.status === "open" || true) && (
               <div className="flex gap-2 flex-wrap">
                 <Button
                   onClick={() => setInterviewDialogOpen(true)}
