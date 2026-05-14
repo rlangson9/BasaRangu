@@ -48,7 +48,7 @@ export function ProviderPortfolio({ items = mockPortfolioItems, isOwner = false 
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-zinc-900">Portfolio</h2>
+            <h2 className="text-2xl font-bold" style={{ color: '#00bba7' }}>Portfolio</h2>
             <p className="text-zinc-600">Past work and verified projects</p>
           </div>
           {isOwner && (
