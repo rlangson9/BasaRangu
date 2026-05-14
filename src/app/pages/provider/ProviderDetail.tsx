@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { BottomNav } from "../../components/BottomNav";
 import { RoleSwitcher } from "../../components/RoleSwitcher";
+import { ProviderPortfolio } from "../../components/ProviderPortfolio";
+import { PortfolioCard } from "../../components/PortfolioCard";
+import { mockPortfolioItems } from "../../types/portfolio";
 import { Button } from "../../components/ui/button";
 import { ArrowLeft, Briefcase, MapPin, Star, Mail, Calendar, Clock, Award, Phone, MessageSquare, DollarSign, Users, CheckCircle } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
@@ -357,6 +360,25 @@ export function ProviderDetail() {
         <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800 mb-6">
           <h3 className="text-lg font-semibold text-white mb-4">About</h3>
           <p className="text-zinc-400 leading-relaxed">{provider.bio}</p>
+        </div>
+
+        {/* Portfolio Preview */}
+        <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Portfolio</h3>
+            <Button
+              variant="ghost"
+              className="text-teal-400 hover:text-teal-300 hover:bg-zinc-800"
+              onClick={() => navigate(`/provider/${id}/portfolio`)}
+            >
+              View All
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {mockPortfolioItems.slice(0, 3).map((item) => (
+              <PortfolioCard key={item.id} item={item} />
+            ))}
+          </div>
         </div>
 
         {/* Experience */}

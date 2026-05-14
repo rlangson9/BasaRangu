@@ -15,6 +15,7 @@ import {
   Briefcase,
   Wrench,
   FileUser,
+  Images,
 } from "lucide-react";
 
 export function ProviderMe() {
@@ -36,6 +37,7 @@ export function ProviderMe() {
     { icon: Wallet, label: "Wallet & Earnings", value: `$${user.wallet || 0}`, path: "/provider/earnings" },
     { icon: Briefcase, label: "Job Management", path: "/provider/jobs" },
     { icon: Wrench, label: "My Tools & Skills", path: "/provider/skills" },
+    { icon: Images, label: "My Portfolio", path: "/provider/portfolio" },
     { icon: Star, label: "Reviews & Ratings", value: `${user.rating || 0} ★`, path: "/provider/reviews" },
     { icon: Settings, label: "Settings", path: "/provider/settings" },
     { icon: Shield, label: "ID Verification", path: "/provider/verification" },
