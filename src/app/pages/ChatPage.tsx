@@ -14,6 +14,8 @@ import { api, getAuthToken, getCurrentUser } from "../services/api";
 import { IcebreakerButtons, IcebreakerQuickButtons } from "../components/IcebreakerButtons";
 import { IcebreakerContext } from "../utils/icebreakers";
 import { QuoteDialog, AcceptOfferDialog, EscrowDialog } from "../components/QuoteDialog";
+import { VideoCall, CallInitiator } from "../components/VideoCall";
+import { CoinBalanceWithDialog } from "../components/CoinPurchase";
 
 export function ChatPage() {
   const { jobId } = useParams();
@@ -28,6 +30,9 @@ export function ChatPage() {
   const [acceptOfferDialogOpen, setAcceptOfferDialogOpen] = useState(false);
   const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
   const [receivedOffer, setReceivedOffer] = useState<any>(null);
+  const [videoCallOpen, setVideoCallOpen] = useState(false);
+  const [callType, setCallType] = useState<"audio" | "video">("video");
+  const [coinBalance, setCoinBalance] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -69,11 +74,37 @@ export function ChatPage() {
       if (messagesResponse.messages) {
         setMessages(messagesResponse.messages);
       }
+      
+      // Load coin balance
+      const token = getAuthToken();
+      if (token) {
+        try {
+          const balanceData = await api.coins.getBalance(token);
+          setCoinBalance(balanceData.balance);
+        } catch (e) {
+          console.error("Failed to load coin balance:", e);
+        }
+      }
     } catch (error) {
       console.error("Error fetching job and messages:", error);
       toast.error("Failed to load chat");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStartCall = (newCallType: "audio" | "video") => {
+    setCallType(newCallType);
+    setVideoCallOpen(true);
+  };
+
+  const handleCallEnd = (duration: number) => {
+    // Refresh coin balance after call
+    const token = getAuthToken();
+    if (token) {
+      api.coins.getBalance(token).then(data => {
+        setCoinBalance(data.balance);
+      });
     }
   };
 
@@ -149,6 +180,10 @@ export function ChatPage() {
                 {job?.status === "paid" ? "Job in progress" : job?.status}
               </p>
             </div>
+            <CoinBalanceWithDialog 
+              balance={coinBalance} 
+              onSuccess={(newBalance) => setCoinBalance(newBalance)}
+            />
           </div>
         </div>
       </div>
@@ -382,6 +417,14 @@ export function ChatPage() {
               </div>
             )}
 
+            {/* Call button - always available */}
+            <div className="flex justify-end">
+              <CallInitiator 
+                recipientName={icebreakerContext.providerName || "Contact"} 
+                onStartCall={handleStartCall}
+              />
+            </div>
+
             <div className="flex justify-end">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -540,6 +583,14 @@ export function ChatPage() {
             type: "escrow_initiated",
           }]);
         }}
+      />
+
+      <VideoCall
+        isOpen={videoCallOpen}
+        onClose={() => setVideoCallOpen(false)}
+        callType={callType}
+        recipientName={icebreakerContext.providerName || "Contact"}
+        onCallEnd={handleCallEnd}
       />
     </div>
   );

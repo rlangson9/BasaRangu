@@ -232,6 +232,41 @@ export const api = {
       request<{ success: boolean; match: any }>(`/feed/match/${jobId}/${providerId}`, { token }),
   },
 
+  coins: {
+    getBalance: (token: string) =>
+      request<{ success: boolean; balance: number; currency: string }>("/coins/balance", { token }),
+    
+    getPackages: (token: string) =>
+      request<{ success: boolean; packages: any[] }>("/coins/packages", { token }),
+    
+    purchase: (token: string, packageId: string, paymentMethod: string) =>
+      request<{ success: boolean; balance: number; transaction: any }>("/coins/purchase", {
+        method: "POST",
+        body: { packageId, paymentMethod },
+        token,
+      }),
+    
+    getTransactions: (token: string) =>
+      request<{ success: boolean; transactions: any[] }>("/coins/transactions", { token }),
+    
+    getCallCosts: (token: string) =>
+      request<{ success: boolean; costs: any }>("/coins/call-costs", { token }),
+    
+    checkCoins: (token: string, callType: string, estimatedMinutes: number) =>
+      request<{ success: boolean; hasEnough: boolean; required: number; current: number }>("/coins/check", {
+        method: "POST",
+        body: { callType, estimatedMinutes },
+        token,
+      }),
+    
+    deductCoins: (token: string, callType: string, durationMinutes: number, callId: string) =>
+      request<{ success: boolean; balance: number; transaction: any }>("/coins/deduct", {
+        method: "POST",
+        body: { callType, durationMinutes, callId },
+        token,
+      }),
+  },
+
   health: () =>
     request<{ status: string }>("/health"),
 };
