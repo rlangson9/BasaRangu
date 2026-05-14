@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { VerificationTier, VerificationStatus, VERIFICATION_TIERS } from "../types/verification";
 import { ShieldCheck, FileText, CheckCircle, Lock } from "lucide-react";
 import { Badge } from "./ui/badge";
@@ -250,5 +251,3 @@ export function VerificationUploadDialog({ isOpen, onClose, onUpload }: Verifica
     </div>
   );
 }
-
-import { useState } from "react";

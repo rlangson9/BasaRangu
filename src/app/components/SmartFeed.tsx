@@ -302,11 +302,6 @@ function getMockFeedData(role: string): FeedItem[] {
         application_count: 47,
         category_match: 8.5,
         matchScore: 92,
-        verification: {
-          tier: VerificationTier.ADVANCED,
-          verifiedAt: Date.now() - 86400000 * 30,
-          documents: { idDocument: true, backgroundCheck: true, skillCertifications: ["Licensed Plumber"] }
-        } as VerificationStatus,
       },
       {
         id: "2",
@@ -317,11 +312,6 @@ function getMockFeedData(role: string): FeedItem[] {
         application_count: 32,
         category_match: 7.2,
         matchScore: 85,
-        verification: {
-          tier: VerificationTier.INTERMEDIATE,
-          verifiedAt: Date.now() - 86400000 * 15,
-          documents: { idDocument: true, backgroundCheck: false, skillCertifications: [] }
-        } as VerificationStatus,
       },
     ];
   } else {

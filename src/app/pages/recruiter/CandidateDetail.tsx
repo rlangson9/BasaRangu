@@ -6,8 +6,6 @@ import { Button } from "../../components/ui/button";
 import { ArrowLeft, Briefcase, MapPin, DollarSign, Star, Mail, Calendar, Bookmark, Share2, FileText, GraduationCap, Award, Phone } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { toast } from "sonner";
-import { VerificationBadge, VerificationStatusCard, VerificationUploadDialog } from "../../components/Verification";
-import { VerificationTier, VerificationStatus } from "../../types/verification";
 
 export function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +14,6 @@ export function CandidateDetail() {
   const [loading, setLoading] = useState(true);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [showResume, setShowResume] = useState(false);
-  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchCandidate();
@@ -37,15 +34,6 @@ export function CandidateDetail() {
           salary: "100k-120k",
           rating: 4.8,
           verified: true,
-          verification: {
-            tier: VerificationTier.ADVANCED,
-            verifiedAt: Date.now() - 86400000 * 30, // 30 days ago
-            documents: {
-              idDocument: true,
-              backgroundCheck: true,
-              skillCertifications: ["AWS Certified Developer", "React Certified"]
-            }
-          } as VerificationStatus,
           email: "john.smith@example.com",
           phone: "+1 (555) 123-4567",
           resumeUrl: "https://example.com/resumes/john-smith-resume.pdf",
@@ -108,15 +96,6 @@ export function CandidateDetail() {
           salary: "90k-110k",
           rating: 4.9,
           verified: true,
-          verification: {
-            tier: VerificationTier.INTERMEDIATE,
-            verifiedAt: Date.now() - 86400000 * 15, // 15 days ago
-            documents: {
-              idDocument: true,
-              backgroundCheck: false,
-              skillCertifications: ["Google Ads Certified"]
-            }
-          } as VerificationStatus,
           email: "sarah.johnson@example.com",
           phone: "+1 (555) 987-6543",
           resumeUrl: "https://example.com/resumes/sarah-johnson-resume.pdf",
@@ -263,11 +242,6 @@ export function CandidateDetail() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <h2 className="text-2xl font-bold text-zinc-900">{candidate.name}</h2>
-                  {candidate.verification ? (
-                    <VerificationBadge status={candidate.verification} />
-                  ) : candidate.verified ? (
-                    <Badge className="bg-teal-50 text-teal-700">Verified</Badge>
-                  ) : null}
                 </div>
                 <p className="text-lg text-zinc-700 mb-2">{candidate.title}</p>
                 <div className="flex items-center gap-1 text-zinc-600 mb-2">
@@ -383,17 +357,8 @@ export function CandidateDetail() {
                 </div>
               </div>
             </div>
-          )}</div>
+          )}
         </div>
-
-        {/* Verification Status */}
-        {candidate.verification && (
-          <div className="mb-6">
-            <VerificationStatusCard 
-              status={candidate.verification} 
-            />
-          </div>
-        )}
 
         {/* Skills */}
         <div className="bg-white rounded-xl p-6 border border-zinc-200 mb-6">
@@ -483,14 +448,6 @@ export function CandidateDetail() {
           </div>
         </div>
       </div>
-
-      <VerificationUploadDialog
-        isOpen={verificationDialogOpen}
-        onClose={() => setVerificationDialogOpen(false)}
-        onUpload={(file, type) => {
-          console.log("Uploading document:", file, type);
-        }}
-      />
 
       <BottomNav role="recruiter" />
     </div>
