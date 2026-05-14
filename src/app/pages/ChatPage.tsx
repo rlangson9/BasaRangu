@@ -16,6 +16,7 @@ import { IcebreakerContext } from "../utils/icebreakers";
 import { QuoteDialog, AcceptOfferDialog, EscrowDialog } from "../components/QuoteDialog";
 import { VideoCall, CallInitiator } from "../components/VideoCall";
 import { CoinBalanceWithDialog } from "../components/CoinPurchase";
+import { InterviewDialog } from "../components/InterviewDialog";
 
 export function ChatPage() {
   const { jobId } = useParams();
@@ -33,6 +34,7 @@ export function ChatPage() {
   const [videoCallOpen, setVideoCallOpen] = useState(false);
   const [callType, setCallType] = useState<"audio" | "video">("video");
   const [coinBalance, setCoinBalance] = useState(0);
+  const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -285,12 +287,7 @@ export function ChatPage() {
             {job?.status === "open" && (
               <div className="flex gap-2 flex-wrap">
                 <Button
-                  onClick={() => {
-                    toast.success("Interview Invitation Sent!", {
-                      description: "An interview invitation has been sent. The candidate will receive a notification.",
-                      duration: 4000,
-                    });
-                  }}
+                  onClick={() => setInterviewDialogOpen(true)}
                   className="bg-teal-500 hover:bg-teal-600 text-white flex-1"
                 >
                   <Calendar className="w-4 h-4 mr-2" />
@@ -591,6 +588,31 @@ export function ChatPage() {
         callType={callType}
         recipientName={icebreakerContext.providerName || "Contact"}
         onCallEnd={handleCallEnd}
+      />
+
+      <InterviewDialog
+        isOpen={interviewDialogOpen}
+        onClose={() => setInterviewDialogOpen(false)}
+        candidateName={icebreakerContext.providerName || "Candidate"}
+        jobTitle={job?.title || ""}
+        onSend={(interview) => {
+          const typeIcon = interview.type === "video" ? "📹" : interview.type === "phone" ? "📞" : "📍";
+          const dateStr = new Date(interview.date).toLocaleDateString("en-US", { 
+            month: "short", 
+            day: "numeric", 
+            year: "numeric" 
+          });
+          
+          setMessages([...messages, {
+            id: `msg-${Date.now()}`,
+            text: `📅 Interview Scheduled: ${typeIcon} ${interview.type} interview on ${dateStr} at ${interview.time} (${interview.duration} min)`,
+            userId: user?.id,
+            userName: user?.name || "You",
+            createdAt: Date.now(),
+            type: "interview_scheduled",
+            interview,
+          }]);
+        }}
       />
     </div>
   );
