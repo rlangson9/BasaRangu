@@ -312,8 +312,7 @@ export function ChatPage() {
                       duration: 3000,
                     });
                   }}
-                  variant="outline"
-                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                  className="bg-[#c28e00] hover:bg-[#a87d00] text-white"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Shortlist

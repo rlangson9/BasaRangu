@@ -270,9 +270,9 @@ export function CandidateDetail() {
               </Button>
               <Button 
                 onClick={handleShortlist}
-                className={`bg-white border ${isShortlisted ? 'border-yellow-500 text-yellow-600' : 'border-zinc-300 text-zinc-700'} hover:bg-zinc-50`}
+                className={`${isShortlisted ? 'bg-yellow-600 border-yellow-600 text-white' : 'bg-[#c28e00] border-[#c28e00] text-white'} hover:opacity-90`}
               >
-                <Bookmark className={`w-4 h-4 mr-2 ${isShortlisted ? 'fill-yellow-500' : ''}`} />
+                <Bookmark className={`w-4 h-4 mr-2 ${isShortlisted ? 'fill-white' : ''}`} />
                 {isShortlisted ? 'Shortlisted' : 'Shortlist'}
               </Button>
               <Button 
