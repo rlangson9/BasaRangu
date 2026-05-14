@@ -136,3 +136,57 @@ CREATE TABLE IF NOT EXISTS kv_store (
 
 CREATE INDEX idx_kv_store_key ON kv_store(key);
 CREATE INDEX idx_kv_store_expires ON kv_store(expires_at);
+
+-- ============================================
+-- SMART FEED TABLES
+-- ============================================
+
+-- User Preferences table
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  preferred_categories TEXT[] DEFAULT ARRAY[]::TEXT[],
+  preferred_locations TEXT[] DEFAULT ARRAY[]::TEXT[],
+  price_range_min DECIMAL(10,2),
+  price_range_max DECIMAL(10,2),
+  urgency_preferences TEXT[] DEFAULT ARRAY[]::TEXT[],
+  rating_min DECIMAL(3,2),
+  experience_level TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+-- User Interactions table (for learning behavior)
+CREATE TABLE IF NOT EXISTS user_interactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  interaction_type TEXT NOT NULL, -- 'click', 'view', 'chat', 'apply', 'bookmark'
+  target_type TEXT NOT NULL, -- 'job', 'provider', 'runner', 'recruiter'
+  target_id UUID NOT NULL,
+  metadata JSONB DEFAULT '{}', -- additional context (category, location, etc.)
+  weight DECIMAL(5,2) DEFAULT 1.0, -- for recommendation algorithm
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User Category Affinities (for faster recommendations)
+CREATE TABLE IF NOT EXISTS user_category_affinities (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  category TEXT NOT NULL,
+  affinity_score DECIMAL(5,2) DEFAULT 0,
+  interaction_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, category)
+);
+
+-- Indexes for smart feed performance
+CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
+CREATE INDEX idx_user_interactions_user_id ON user_interactions(user_id);
+CREATE INDEX idx_user_interactions_type ON user_interactions(interaction_type);
+CREATE INDEX idx_user_interactions_target ON user_interactions(target_type, target_id);
+CREATE INDEX idx_user_interactions_created ON user_interactions(created_at);
+CREATE INDEX idx_user_affinities_user_id ON user_category_affinities(user_id);
+CREATE INDEX idx_user_affinities_category ON user_category_affinities(category);
+CREATE INDEX idx_user_affinities_score ON user_category_affinities(affinity_score DESC);

@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { Search, Filter, MapPin, Clock, Briefcase, Star, User, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { SmartFeed } from "../../components/SmartFeed";
 
 const categories = [
   "All",
@@ -289,6 +290,11 @@ export function ProviderHome() {
       </div>
 
       <div className="max-w-screen-xl mx-auto px-4 py-6">
+        {/* Smart Feed - Personalized Job Recommendations */}
+        <div className="mb-8">
+          <SmartFeed role="provider" />
+        </div>
+
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-white mb-3">
             {sortedJobs.length} Jobs Available

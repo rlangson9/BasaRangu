@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Search, Plus, Filter, MapPin, Clock, Star, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { api, getAuthToken, getCurrentUser } from "../../services/api";
+import { SmartFeed } from "../../components/SmartFeed";
 
 const categories = [
   "All",
@@ -226,6 +227,11 @@ export function UserHome() {
           <Plus className="w-5 h-5 mr-2" />
           Post a Job
         </Button>
+
+        {/* Smart Feed - Personalized Recommendations */}
+        <div className="mb-8">
+          <SmartFeed role="user" />
+        </div>
 
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-white mb-3">

@@ -10,6 +10,7 @@ import { reviewsRouter } from "./routes/reviews";
 import { disputesRouter } from "./routes/disputes";
 import { adminRouter } from "./routes/admin";
 import { appRouter } from "./routes/app";
+import { feedRouter } from "./routes/feed";
 
 const app = new Hono();
 
@@ -39,6 +40,7 @@ app.route("/make-server-5ed51d91/reviews", reviewsRouter);
 app.route("/make-server-5ed51d91/disputes", disputesRouter);
 app.route("/make-server-5ed51d91/admin", adminRouter);
 app.route("/make-server-5ed51d91/app", appRouter);
+app.route("/make-server-5ed51d91/feed", feedRouter);
 
 app.get("/make-server-5ed51d91/health", (c) => {
   return c.json({ status: "ok" });

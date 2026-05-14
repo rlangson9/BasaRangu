@@ -194,6 +194,41 @@ export const api = {
       request<{ users: any[] }>("/admin/users", { token }),
   },
 
+  feed: {
+    trackInteraction: (token: string, data: {
+      interactionType: string;
+      targetType: string;
+      targetId: string;
+      metadata?: Record<string, any>;
+      weight?: number;
+    }) =>
+      request<{ success: boolean }>("/feed/track", {
+        method: "POST",
+        body: data,
+        token,
+      }),
+
+    getRecommendations: (token: string, params?: { limit?: number; offset?: number }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return request<{ recommendations: any[] }>(`/feed/recommendations${query ? `?${query}` : ""}`, { token });
+    },
+
+    getTrending: (params?: { role?: string; limit?: number }) => {
+      const query = new URLSearchParams(params as any).toString();
+      return request<{ trending: any[] }>(`/feed/trending${query ? `?${query}` : ""}`);
+    },
+
+    getPreferences: (token: string) =>
+      request<{ preferences: any }>("/feed/preferences", { token }),
+
+    updatePreferences: (token: string, preferences: any) =>
+      request<{ success: boolean }>("/feed/preferences", {
+        method: "PUT",
+        body: preferences,
+        token,
+      }),
+  },
+
   health: () =>
     request<{ status: string }>("/health"),
 };
