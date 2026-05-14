@@ -227,6 +227,9 @@ export const api = {
         body: preferences,
         token,
       }),
+
+    getMatchScore: (token: string, jobId: string, providerId: string) =>
+      request<{ success: boolean; match: any }>(`/feed/match/${jobId}/${providerId}`, { token }),
   },
 
   health: () =>

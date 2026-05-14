@@ -1,6 +1,7 @@
 import { Hono } from "npm:hono";
 import { db } from "../utils/index.ts";
 import { authenticate } from "../utils/index.ts";
+import { calculateMatchScore } from "../utils/compatibility.ts";
 
 const feedRouter = new Hono();
 
@@ -176,6 +177,58 @@ feedRouter.get("/preferences", authenticate, async (c) => {
   }
 });
 
+// Get match score for a specific job and provider
+feedRouter.get("/match/:jobId/:providerId", authenticate, async (c) => {
+  try {
+    const jobId = c.req.param('jobId');
+    const providerId = c.req.param('providerId');
+    const userId = c.get('userId');
+
+    // Get job and provider details
+    const [jobResult, providerResult, prefsResult] = await Promise.all([
+      db.query('SELECT * FROM jobs WHERE id = $1', [jobId]),
+      db.query('SELECT * FROM users WHERE id = $1', [providerId]),
+      db.query('SELECT * FROM user_preferences WHERE user_id = $1', [userId])
+    ]);
+
+    if (!jobResult.rows[0] || !providerResult.rows[0]) {
+      return c.json({ success: false, error: 'Job or provider not found' }, 404);
+    }
+
+    const job = jobResult.rows[0];
+    const provider = providerResult.rows[0];
+    const preferences = prefsResult.rows[0];
+
+    const matchScore = calculateMatchScore({
+      userPreferences: preferences ? {
+        preferredCategories: preferences.preferred_categories || [],
+        preferredLocations: preferences.preferred_locations || [],
+        priceRangeMin: preferences.price_range_min || 0,
+        priceRangeMax: preferences.price_range_max || Infinity,
+        ratingMin: preferences.rating_min || 0,
+        experienceLevel: preferences.experience_level || 'Any'
+      } : undefined,
+      job: {
+        category: job.category,
+        location: job.location,
+        budget: job.budget,
+        urgency: job.urgency
+      },
+      provider: {
+        categories: provider.categories || [job.category],
+        location: provider.city || provider.location || 'Unknown',
+        rating: provider.rating || 4.0,
+        experienceLevel: provider.experience_level || 'Any'
+      }
+    });
+
+    return c.json({ success: true, match: matchScore });
+  } catch (error) {
+    console.error('Get match score error:', error);
+    return c.json({ success: false, error: 'Failed to calculate match' }, 500);
+  }
+});
+
 // Helper: Get recommendations for users (providers/runners)
 async function getUserRecommendations(userId: string, limit: number, offset: number) {
   // Get user preferences and affinities
@@ -226,19 +279,56 @@ async function getUserRecommendations(userId: string, limit: number, offset: num
   }
 
   const result = await db.query(query, params);
-  return result.rows;
+  
+  // For each provider, calculate a sample match score using mock job data
+  // In real implementation, you'd use an actual job to score against
+  const providersWithScores = result.rows.map(provider => {
+    const mockJob = {
+      category: provider.categories?.[0] || 'Cleaning',
+      location: provider.city || provider.location || 'Harare',
+      budget: 50,
+      urgency: 'Normal'
+    };
+
+    const matchScore = calculateMatchScore({
+      userPreferences: preferences ? {
+        preferredCategories: preferences.preferred_categories || [],
+        preferredLocations: preferences.preferred_locations || [],
+        priceRangeMin: preferences.price_range_min || 0,
+        priceRangeMax: preferences.price_range_max || Infinity,
+        ratingMin: preferences.rating_min || 0,
+        experienceLevel: preferences.experience_level || 'Any'
+      } : undefined,
+      job: mockJob,
+      provider: {
+        categories: provider.categories || [mockJob.category],
+        location: provider.city || provider.location || 'Unknown',
+        rating: provider.rating || provider.avg_rating || 4.0,
+        experienceLevel: provider.experience_level || 'Any'
+      }
+    });
+
+    return {
+      ...provider,
+      matchScore: matchScore.overall
+    };
+  });
+
+  return providersWithScores;
 }
 
 // Helper: Get recommendations for providers/runners (jobs)
 async function getJobRecommendations(userId: string, limit: number, offset: number) {
   // Get user preferences and affinities
-  const [prefsResult, affinitiesResult] = await Promise.all([
+  const [prefsResult, affinitiesResult, userResult] = await Promise.all([
     db.query('SELECT * FROM user_preferences WHERE user_id = $1', [userId]),
-    db.query('SELECT * FROM user_category_affinities WHERE user_id = $1 ORDER BY affinity_score DESC LIMIT 5', [userId])
+    db.query('SELECT * FROM user_category_affinities WHERE user_id = $1 ORDER BY affinity_score DESC LIMIT 5', [userId]),
+    db.query('SELECT * FROM users WHERE id = $1', [userId])
   ]);
 
   const preferences = prefsResult.rows[0];
   const affinities = affinitiesResult.rows;
+  const provider = userResult.rows[0];
 
   let query = `
     SELECT 
@@ -280,7 +370,39 @@ async function getJobRecommendations(userId: string, limit: number, offset: numb
   }
 
   const result = await db.query(query, params);
-  return result.rows;
+  
+  // For each job, calculate match score
+  const jobsWithScores = result.rows.map(job => {
+    const matchScore = calculateMatchScore({
+      userPreferences: preferences ? {
+        preferredCategories: preferences.preferred_categories || [],
+        preferredLocations: preferences.preferred_locations || [],
+        priceRangeMin: preferences.price_range_min || 0,
+        priceRangeMax: preferences.price_range_max || Infinity,
+        ratingMin: preferences.rating_min || 0,
+        experienceLevel: preferences.experience_level || 'Any'
+      } : undefined,
+      job: {
+        category: job.category,
+        location: job.location,
+        budget: job.budget,
+        urgency: job.urgency
+      },
+      provider: {
+        categories: provider.categories || [job.category],
+        location: provider.city || provider.location || 'Unknown',
+        rating: provider.rating || 4.0,
+        experienceLevel: provider.experience_level || 'Any'
+      }
+    });
+
+    return {
+      ...job,
+      matchScore: matchScore.overall
+    };
+  });
+
+  return jobsWithScores;
 }
 
 export { feedRouter };

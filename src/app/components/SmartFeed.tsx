@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { Star, Zap, Heart, Bookmark, MessageSquare, Eye, DollarSign, MapPin, Clock } from "lucide-react";
 import { api, getAuthToken } from "../services/api";
+import { MatchScoreBadge } from "./MatchScore";
 
 interface SmartFeedProps {
   role?: "user" | "provider" | "runner";
@@ -246,17 +247,9 @@ export function SmartFeed({ role = "user" }: SmartFeedProps) {
             </div>
 
             {/* Match score indicator */}
-            {item.category_match > 0 && (
-              <div className="flex items-center gap-2 text-xs text-teal-400">
-                <div className="h-1.5 w-20 bg-zinc-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-teal-500 rounded-full transition-all"
-                    style={{ width: `${Math.min(item.category_match * 10, 100)}%` }}
-                  ></div>
-                </div>
-                <span>Good match</span>
-              </div>
-            )}
+            <div className="mb-3">
+              <MatchScoreBadge score={item.matchScore} />
+            </div>
 
             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-zinc-700">
               <button
@@ -301,6 +294,7 @@ function getMockFeedData(role: string): FeedItem[] {
         avg_rating: 4.8,
         application_count: 47,
         category_match: 8.5,
+        matchScore: 92,
       },
       {
         id: "2",
@@ -310,6 +304,7 @@ function getMockFeedData(role: string): FeedItem[] {
         avg_rating: 4.9,
         application_count: 32,
         category_match: 7.2,
+        matchScore: 85,
       },
     ];
   } else {
@@ -322,6 +317,7 @@ function getMockFeedData(role: string): FeedItem[] {
         location: "Downtown",
         description: "Leaky faucet needs repair, emergency service required",
         application_count: 3,
+        matchScore: 78,
       },
       {
         id: "2",
@@ -331,6 +327,7 @@ function getMockFeedData(role: string): FeedItem[] {
         location: "Westside",
         description: "3 bedroom house needs thorough cleaning",
         application_count: 8,
+        matchScore: 88,
       },
     ];
   }
