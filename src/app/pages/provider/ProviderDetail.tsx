@@ -32,7 +32,7 @@ export function ProviderDetail() {
           category: "Plumbing",
           skills: ["Plumbing", "Pipe Repair", "Leak Fixing", "Water Heater Installation", "Bathroom Renovation"],
           rating: 4.8,
-          reviews: 124,
+          reviewCount: 124,
           location: "Harare, Zimbabwe",
           distance: 2.5,
           avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20plumber%20portrait&image_size=square",
@@ -130,7 +130,7 @@ export function ProviderDetail() {
           category: "Cleaning",
           skills: ["Deep Cleaning", "Housekeeping", "Office Cleaning", "Window Cleaning", "Carpet Cleaning"],
           rating: 4.9,
-          reviews: 98,
+          reviewCount: 98,
           location: "Harare, Zimbabwe",
           distance: 3.2,
           avatar: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=professional%20cleaner%20portrait&image_size=square",
@@ -369,7 +369,7 @@ export function ProviderDetail() {
             <Button
               variant="ghost"
               className="text-teal-400 hover:text-teal-300 hover:bg-zinc-800"
-              onClick={() => navigate(`/provider/${id}/portfolio`)}
+              onClick={() => navigate(`/provider/detail/${id}/portfolio`)}
             >
               View All
             </Button>

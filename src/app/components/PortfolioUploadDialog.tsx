@@ -14,22 +14,22 @@ interface PortfolioUploadDialogProps {
 }
 
 export function PortfolioUploadDialog({
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit?: (data: any) => void;
-  existingJobs?: Array<{ id: string; title: string }>;
+  isOpen,
+  onClose,
+  onSubmit,
+  existingJobs,
 }: PortfolioUploadDialogProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split("T")[0],
     tags: "",
     beforeImage: null as File | null,
     afterImage: null as File | null,
     additionalImages: [] as File[],
     linkToJob: false,
-    selectedJobId: ""
+    selectedJobId: "",
   });
 
   const [uploading, setUploading] = useState(false);
@@ -37,28 +37,27 @@ export function PortfolioUploadDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploading(true);
-    
+
     try {
-      // Simulate upload
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       toast.success("Portfolio item added successfully!");
       onSubmit?.({
         ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        tags: formData.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       });
       onClose();
       setFormData({
         title: "",
         description: "",
         category: "",
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split("T")[0],
         tags: "",
         beforeImage: null,
         afterImage: null,
         additionalImages: [],
         linkToJob: false,
-        selectedJobId: ""
+        selectedJobId: "",
       });
     } catch (error) {
       toast.error("Failed to add portfolio item");
@@ -74,10 +73,7 @@ export function PortfolioUploadDialog({
       <div className="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-zinc-200 p-6 flex items-center justify-between">
           <h2 className="text-xl font-bold text-zinc-900">Add Portfolio Item</h2>
-          <button
-            onClick={onClose}
-            className="text-zinc-500 hover:text-zinc-700"
-          >
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-700">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -118,12 +114,7 @@ export function PortfolioUploadDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Date
-              </div>
-              </Label>
+              <Label htmlFor="date">Date</Label>
               <Input
                 id="date"
                 type="date"
@@ -136,7 +127,7 @@ export function PortfolioUploadDialog({
 
           <div className="space-y-2">
             <Label>Images</Label>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="border-2 border-dashed border-zinc-300 rounded-lg p-4 text-center">
                 <Input
@@ -192,7 +183,7 @@ export function PortfolioUploadDialog({
                   if (e.target.files) {
                     setFormData({
                       ...formData,
-                      additionalImages: Array.from(e.target.files)
+                      additionalImages: Array.from(e.target.files),
                     });
                   }
                 }}
@@ -236,17 +227,12 @@ export function PortfolioUploadDialog({
                     </option>
                   ))}
                 </select>
-              </div>
+              )}
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="tags">
-              <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Tags
-              </div>
-            </Label>
+            <Label htmlFor="tags">Tags</Label>
             <Input
               id="tags"
               value={formData.tags}

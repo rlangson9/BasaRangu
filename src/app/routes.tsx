@@ -32,6 +32,8 @@ import { RunnerReviews } from "./pages/runner/RunnerReviews";
 import { RunnerSettings } from "./pages/runner/RunnerSettings";
 import { RunnerResume } from "./pages/runner/RunnerResume";
 import { ProviderDetail } from "./pages/provider/ProviderDetail";
+import { ProviderPortfolioPage } from "./pages/provider/ProviderPortfolioPage";
+import { ProviderMyPortfolioPage } from "./pages/provider/ProviderMyPortfolioPage";
 import { RecruiterHome } from "./pages/recruiter/RecruiterHome";
 import { RecruiterCandidates } from "./pages/recruiter/RecruiterCandidates";
 import { RecruiterJobs } from "./pages/recruiter/RecruiterJobs";
@@ -95,6 +97,8 @@ export const router = createBrowserRouter([
       { path: "verification", element: <ProviderVerification /> },
       { path: "resume", element: <ProviderResume /> },
       { path: "detail/:id", element: <ProviderDetail /> },
+      { path: "portfolio", element: <ProviderMyPortfolioPage /> },
+      { path: ":id/portfolio", element: <ProviderPortfolioPage /> },
     ],
   },
   // Errand Runner Routes
