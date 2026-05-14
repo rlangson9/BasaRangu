@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { ArrowLeft, Send, AlertTriangle, CheckCircle, UserPlus, Calendar, Briefcase, MoreVertical, FileText, DollarSign } from "lucide-react";
+import { ArrowLeft, Send, AlertTriangle, CheckCircle, UserPlus, Calendar, Briefcase, MoreVertical, FileText, DollarSign, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -394,6 +394,43 @@ export function ChatPage() {
                   <DropdownMenuItem
                     className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
                     onClick={() => {
+                      setNewMessage("Can you provide more details about the job requirements?");
+                    }}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2 text-blue-400" />
+                    Request More Info
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
+                    onClick={() => {
+                      setNewMessage("Would you be available for a quick call to discuss this further?");
+                    }}
+                  >
+                    <Calendar className="w-4 h-4 mr-2 text-purple-400" />
+                    Schedule a Call
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
+                    onClick={() => {
+                      toast.info("Photo upload placeholder", {
+                        description: "Photo upload feature coming soon!",
+                        duration: 3000,
+                      });
+                    }}
+                  >
+                    <FileText className="w-4 h-4 mr-2 text-green-400" />
+                    Share Photos/Files
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
+                    onClick={() => navigate(`/job/${jobId}`)}
+                  >
+                    <Briefcase className="w-4 h-4 mr-2 text-teal-400" />
+                    View Job Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
+                    onClick={() => {
                       toast.info("Report Submitted", {
                         description: "Your report has been submitted. Our team will review it shortly.",
                         duration: 4000,
@@ -402,13 +439,6 @@ export function ChatPage() {
                   >
                     <AlertTriangle className="w-4 h-4 mr-2 text-red-400" />
                     Report User
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-zinc-200 hover:bg-zinc-700 cursor-pointer"
-                    onClick={() => navigate(`/job/${jobId}`)}
-                  >
-                    <FileText className="w-4 h-4 mr-2 text-teal-400" />
-                    View Job Details
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
